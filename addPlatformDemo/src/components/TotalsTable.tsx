@@ -1,17 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { CHANNEL_LABEL, CHANNELS } from "@/lib/channels";
+import { useMemo, useState } from "react";
+import { CHANNEL_LABEL, CHANNELS, type Channel } from "@/lib/channels";
 import type { DashboardCampaign } from "@/lib/dashboardData";
 import type { ReportGroup } from "@/lib/groups";
 import type { Metrics, NormalizedRow } from "@/lib/ingest";
-import { formatMetric, groupTotals, METRICS, sumRows, totalsMatch } from "@/lib/metrics";
+import {
+  formatMetric,
+  groupTotals,
+  METRIC_BY_KEY,
+  METRICS,
+  sumRows,
+  totalsMatch,
+  type MetricKey,
+} from "@/lib/metrics";
 
 interface Props {
   rows: NormalizedRow[];
   campaignOf: (externalCampaignId: string) => DashboardCampaign;
   groups: ReportGroup[];
 }
+
+type SortKey = "label" | MetricKey;
+type SortDir = "asc" | "desc";
 
 function MetricCells({ totals }: { totals: Metrics }) {
   return METRICS.map((m) => (
@@ -27,30 +38,105 @@ const GROUP_TAG: Record<ReportGroup["kind"], string | null> = {
   unmatched: "bg-zinc-100 text-zinc-600",
 };
 
+function metricValue(totals: Metrics, key: MetricKey): number | null {
+  return METRIC_BY_KEY[key].value(totals);
+}
+
+function compareValues(a: number | null, b: number | null, dir: SortDir): number {
+  // Missing rates (e.g. CPA with 0 conversions) always sort last.
+  if (a === null && b === null) return 0;
+  if (a === null) return 1;
+  if (b === null) return -1;
+  return dir === "asc" ? a - b : b - a;
+}
+
+function SortHeader({
+  label,
+  column,
+  sort,
+  align = "right",
+  onSort,
+}: {
+  label: string;
+  column: SortKey;
+  sort: { key: SortKey; dir: SortDir };
+  align?: "left" | "right";
+  onSort: (key: SortKey) => void;
+}) {
+  const active = sort.key === column;
+  const ariaSort = active ? (sort.dir === "asc" ? "ascending" : "descending") : "none";
+  return (
+    <th
+      className={`whitespace-nowrap px-2 py-2 font-medium ${align === "left" ? "pr-3 text-left" : "text-right"}`}
+      aria-sort={ariaSort}
+    >
+      <button
+        type="button"
+        onClick={() => onSort(column)}
+        className={`inline-flex items-center gap-1 uppercase tracking-wide hover:text-zinc-800 ${
+          align === "right" ? "flex-row-reverse" : ""
+        } ${active ? "text-zinc-800" : ""}`}
+      >
+        {label}
+        <span aria-hidden className="w-3 text-center text-[10px] text-zinc-400">
+          {active ? (sort.dir === "asc" ? "▲" : "▼") : "◇"}
+        </span>
+      </button>
+    </th>
+  );
+}
+
 export function TotalsTable({ rows, campaignOf, groups }: Props) {
-  // Group totals and the grand total are summed from rows independently of the channel breakdown,
-  // so the reconciliation check below compares independent sums rather than restating one.
-  const byGroup = groupTotals(rows, (r) => campaignOf(r.externalCampaignId).groupKey);
-  const byGroupChannel = groupTotals(rows, (r) => {
-    const campaign = campaignOf(r.externalCampaignId);
-    return `${campaign.groupKey}|${campaign.channel}`;
-  });
-  const grandTotal = sumRows(rows);
-
-  const sections = groups
-    .filter((g) => byGroup.has(g.key))
-    .map((group) => ({
-      group,
-      total: byGroup.get(group.key)!,
-      channels: CHANNELS.filter((ch) => byGroupChannel.has(`${group.key}|${ch}`)).map((channel) => ({
-        channel,
-        total: byGroupChannel.get(`${group.key}|${channel}`)!,
-      })),
-    }));
-
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: "spend", dir: "desc" });
+
   const isOpen = (key: string) => open[key] ?? false;
   const toggle = (key: string) => setOpen((prev) => ({ ...prev, [key]: !isOpen(key) }));
+
+  const onSort = (key: SortKey) => {
+    setSort((prev) =>
+      prev.key === key
+        ? { key, dir: prev.dir === "desc" ? "asc" : "desc" }
+        : { key, dir: key === "label" ? "asc" : "desc" },
+    );
+  };
+
+  // Group totals and the grand total are summed from rows independently of the channel breakdown,
+  // so the reconciliation check below compares independent sums rather than restating one.
+  const { sections, grandTotal } = useMemo(() => {
+    const byGroup = groupTotals(rows, (r) => campaignOf(r.externalCampaignId).groupKey);
+    const byGroupChannel = groupTotals(rows, (r) => {
+      const campaign = campaignOf(r.externalCampaignId);
+      return `${campaign.groupKey}|${campaign.channel}`;
+    });
+
+    const built = groups
+      .filter((g) => byGroup.has(g.key))
+      .map((group) => {
+        const channels = CHANNELS.filter((ch) => byGroupChannel.has(`${group.key}|${ch}`)).map((channel) => ({
+          channel,
+          total: byGroupChannel.get(`${group.key}|${channel}`)!,
+        }));
+        channels.sort((a, b) => {
+          if (sort.key === "label") {
+            const cmp = CHANNEL_LABEL[a.channel].localeCompare(CHANNEL_LABEL[b.channel]);
+            return sort.dir === "asc" ? cmp : -cmp;
+          }
+          return compareValues(metricValue(a.total, sort.key), metricValue(b.total, sort.key), sort.dir);
+        });
+        return { group, total: byGroup.get(group.key)!, channels };
+      });
+
+    built.sort((a, b) => {
+      if (sort.key === "label") {
+        const cmp = a.group.label.localeCompare(b.group.label);
+        return sort.dir === "asc" ? cmp : -cmp;
+      }
+      return compareValues(metricValue(a.total, sort.key), metricValue(b.total, sort.key), sort.dir);
+    });
+
+    return { sections: built, grandTotal: sumRows(rows) };
+  }, [rows, campaignOf, groups, sort]);
 
   const channelsReconcile = sections.every((s) => totalsMatch(sumRows(s.channels.map((c) => c.total)), s.total));
   const groupsReconcile = totalsMatch(sumRows(sections.map((s) => s.total)), grandTotal);
@@ -60,13 +146,11 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
     <div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">
+          <thead className="border-b border-zinc-200 text-xs text-zinc-500">
             <tr>
-              <th className="py-2 pr-3 text-left font-medium">Initiative / channel</th>
+              <SortHeader label="Initiative / channel" column="label" sort={sort} align="left" onSort={onSort} />
               {METRICS.map((m) => (
-                <th key={m.key} className="whitespace-nowrap px-2 py-2 text-right font-medium">
-                  {m.label}
-                </th>
+                <SortHeader key={m.key} label={m.label} column={m.key} sort={sort} onSort={onSort} />
               ))}
             </tr>
           </thead>
@@ -109,7 +193,7 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
                   <MetricCells totals={total} />
                 </tr>
                 {expanded &&
-                  channels.map(({ channel, total: channelTotal }) => (
+                  channels.map(({ channel, total: channelTotal }: { channel: Channel; total: Metrics }) => (
                     <tr key={channel} className="text-zinc-600">
                       <td className="whitespace-nowrap py-2 pl-7 pr-3">{CHANNEL_LABEL[channel]}</td>
                       <MetricCells totals={channelTotal} />
