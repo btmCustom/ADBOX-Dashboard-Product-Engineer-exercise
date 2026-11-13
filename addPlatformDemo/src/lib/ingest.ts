@@ -3,10 +3,15 @@ import path from "node:path";
 
 export type Channel = "meta" | "google" | "amazon";
 
+export const SHORT_CHANNEL: Record<Channel, string> = {
+  meta: "meta",
+  google: "gads",
+  amazon: "amzn",
+};
+
 export interface NormalizedRow {
-  channel: Channel;
   date: string; // YYYY-MM-DD
-  campaignId: string;
+  externalCampaignId: string; // `${shortChannel}/${platform campaign id}`, e.g. "gads/43800084505"
   campaignName: string;
   spend: number; // USD
   impressions: number;
@@ -22,6 +27,17 @@ const DATA_DIR = path.join(process.cwd(), "..");
 export const META_CONVERSION_ACTION = "lead";
 
 const MICROS_PER_USD = 1_000_000;
+
+export function toExternalCampaignId(channel: Channel, platformId: string): string {
+  return `${SHORT_CHANNEL[channel]}/${platformId}`;
+}
+
+export function channelOf(externalCampaignId: string): Channel {
+  const short = externalCampaignId.split("/")[0];
+  const channel = (Object.keys(SHORT_CHANNEL) as Channel[]).find((c) => SHORT_CHANNEL[c] === short);
+  if (!channel) throw new Error(`Unknown channel prefix in ${externalCampaignId}`);
+  return channel;
+}
 
 function toNumber(value: string | undefined, field: string): number {
   const n = Number(value ?? 0);
@@ -69,9 +85,8 @@ function actionValue(actions: MetaAction[] | undefined, type: string): number {
 export function loadMeta(): NormalizedRow[] {
   const { data } = JSON.parse(readData("meta_insights.json")) as { data: MetaInsight[] };
   return data.map((r) => ({
-    channel: "meta",
     date: r.date_start,
-    campaignId: r.campaign_id,
+    externalCampaignId: toExternalCampaignId("meta", r.campaign_id),
     campaignName: r.campaign_name,
     spend: toNumber(r.spend, "spend"),
     impressions: toNumber(r.impressions, "impressions"),
@@ -83,9 +98,8 @@ export function loadMeta(): NormalizedRow[] {
 
 export function loadGoogle(): NormalizedRow[] {
   return parseCsv(readData("google_ads.csv")).map((r) => ({
-    channel: "google",
     date: r["segments.date"],
-    campaignId: r["campaign.id"],
+    externalCampaignId: toExternalCampaignId("google", r["campaign.id"]),
     campaignName: r["campaign.name"],
     spend: toNumber(r["metrics.cost_micros"], "cost_micros") / MICROS_PER_USD,
     impressions: toNumber(r["metrics.impressions"], "impressions"),
@@ -104,9 +118,8 @@ function usDateToIso(mmddyyyy: string): string {
 // Conversions use Amazon's 14-day off-Amazon attribution window, kept as reported.
 export function loadAmazon(): NormalizedRow[] {
   return parseCsv(readData("amazon_dsp.csv")).map((r) => ({
-    channel: "amazon",
     date: usDateToIso(r.date),
-    campaignId: r.orderId,
+    externalCampaignId: toExternalCampaignId("amazon", r.orderId),
     campaignName: r.orderName,
     spend: toNumber(r.totalCost, "totalCost"),
     impressions: toNumber(r.impressions, "impressions"),

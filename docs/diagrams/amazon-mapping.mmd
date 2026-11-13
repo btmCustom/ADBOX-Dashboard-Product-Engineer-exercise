@@ -1,6 +1,5 @@
 flowchart LR
     subgraph SRC["amazon_dsp.csv"]
-        a_const["constant"]
         a_date["date"]
         a_id["orderId"]
         a_name["orderName"]
@@ -11,9 +10,8 @@ flowchart LR
         a_val["offAmazonConversionValue14d"]
     end
     subgraph OUT["NormalizedRow"]
-        n_channel["channel"]
         n_date["date"]
-        n_id["campaignId"]
+        n_id["externalCampaignId"]
         n_name["campaignName"]
         n_spend["spend"]
         n_impr["impressions"]
@@ -21,9 +19,8 @@ flowchart LR
         n_conv["conversions"]
         n_val["conversionValue"]
     end
-    a_const -- "amazon" --> n_channel
     a_date -- "MM/DD/YYYY to YYYY-MM-DD" --> n_date
-    a_id -- "as is" --> n_id
+    a_id -- "prefix amzn/" --> n_id
     a_name -- "as is" --> n_name
     a_spend -- "to number" --> n_spend
     a_impr -- "to number" --> n_impr

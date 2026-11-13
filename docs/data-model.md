@@ -3,6 +3,10 @@
 Each platform export is loaded by `addPlatformDemo/src/lib/ingest.ts` into one `NormalizedRow` per
 campaign per day. Grain is the same everywhere: one row = one campaign (Amazon: order) on one date.
 
+There is no separate channel column. The channel is the prefix of `externalCampaignId`, written as
+`{shortChannel}/{platform campaign id}` (`meta/31480986460544234`, `gads/43800084505`, `amzn/3779101165048`),
+and `channelOf()` reads it back. This also keeps IDs unique across platforms.
+
 ## Source schemas and the normalized row
 
 Attribute comments show the raw column name where it differs from the entity field.
@@ -55,9 +59,8 @@ erDiagram
         float offAmazonConversionValue14d "14-day window"
     }
     NORMALIZED_ROW {
-        string channel "meta, google, amazon"
         string date PK "YYYY-MM-DD"
-        string campaignId PK
+        string externalCampaignId PK "meta/..., gads/..., amzn/..."
         string campaignName
         float spend "USD"
         int impressions
@@ -72,7 +75,6 @@ erDiagram
 ```mermaid
 flowchart LR
     subgraph SRC["meta_insights.json, data[]"]
-        m_const["constant"]
         m_date["date_start"]
         m_id["campaign_id"]
         m_name["campaign_name"]
@@ -84,9 +86,8 @@ flowchart LR
         m_drop["not used: reach, date_stop,<br/>link_click (duplicates clicks),<br/>landing_page_view,<br/>offsite_conversion.fb_pixel_lead (duplicates lead)"]
     end
     subgraph OUT["NormalizedRow"]
-        n_channel["channel"]
         n_date["date"]
-        n_id["campaignId"]
+        n_id["externalCampaignId"]
         n_name["campaignName"]
         n_spend["spend"]
         n_impr["impressions"]
@@ -94,9 +95,8 @@ flowchart LR
         n_conv["conversions"]
         n_val["conversionValue"]
     end
-    m_const -- "meta" --> n_channel
     m_date -- "as is" --> n_date
-    m_id -- "as is" --> n_id
+    m_id -- "prefix meta/" --> n_id
     m_name -- "as is" --> n_name
     m_spend -- "string to number" --> n_spend
     m_impr -- "string to number" --> n_impr
@@ -112,7 +112,6 @@ flowchart LR
 ```mermaid
 flowchart LR
     subgraph SRC["google_ads.csv"]
-        g_const["constant"]
         g_date["segments.date"]
         g_id["campaign.id"]
         g_name["campaign.name"]
@@ -124,9 +123,8 @@ flowchart LR
         g_drop["not used: campaign.status<br/>(ENABLED on every row)"]
     end
     subgraph OUT["NormalizedRow"]
-        n_channel["channel"]
         n_date["date"]
-        n_id["campaignId"]
+        n_id["externalCampaignId"]
         n_name["campaignName"]
         n_spend["spend"]
         n_impr["impressions"]
@@ -134,9 +132,8 @@ flowchart LR
         n_conv["conversions"]
         n_val["conversionValue"]
     end
-    g_const -- "google" --> n_channel
     g_date -- "as is" --> n_date
-    g_id -- "as is" --> n_id
+    g_id -- "prefix gads/" --> n_id
     g_name -- "as is" --> n_name
     g_spend -- "divide by 1,000,000" --> n_spend
     g_impr -- "to number" --> n_impr
@@ -152,7 +149,6 @@ flowchart LR
 ```mermaid
 flowchart LR
     subgraph SRC["amazon_dsp.csv"]
-        a_const["constant"]
         a_date["date"]
         a_id["orderId"]
         a_name["orderName"]
@@ -163,9 +159,8 @@ flowchart LR
         a_val["offAmazonConversionValue14d"]
     end
     subgraph OUT["NormalizedRow"]
-        n_channel["channel"]
         n_date["date"]
-        n_id["campaignId"]
+        n_id["externalCampaignId"]
         n_name["campaignName"]
         n_spend["spend"]
         n_impr["impressions"]
@@ -173,9 +168,8 @@ flowchart LR
         n_conv["conversions"]
         n_val["conversionValue"]
     end
-    a_const -- "amazon" --> n_channel
     a_date -- "MM/DD/YYYY to YYYY-MM-DD" --> n_date
-    a_id -- "as is" --> n_id
+    a_id -- "prefix amzn/" --> n_id
     a_name -- "as is" --> n_name
     a_spend -- "to number" --> n_spend
     a_impr -- "to number" --> n_impr

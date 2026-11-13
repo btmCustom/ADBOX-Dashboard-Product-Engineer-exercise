@@ -45,9 +45,8 @@ erDiagram
         float offAmazonConversionValue14d "14-day window"
     }
     NORMALIZED_ROW {
-        string channel "meta, google, amazon"
         string date PK "YYYY-MM-DD"
-        string campaignId PK
+        string externalCampaignId PK "meta/..., gads/..., amzn/..."
         string campaignName
         float spend "USD"
         int impressions

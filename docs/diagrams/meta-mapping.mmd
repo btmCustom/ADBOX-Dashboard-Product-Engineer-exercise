@@ -1,6 +1,5 @@
 flowchart LR
     subgraph SRC["meta_insights.json, data[]"]
-        m_const["constant"]
         m_date["date_start"]
         m_id["campaign_id"]
         m_name["campaign_name"]
@@ -12,9 +11,8 @@ flowchart LR
         m_drop["not used: reach, date_stop,<br/>link_click (duplicates clicks),<br/>landing_page_view,<br/>offsite_conversion.fb_pixel_lead (duplicates lead)"]
     end
     subgraph OUT["NormalizedRow"]
-        n_channel["channel"]
         n_date["date"]
-        n_id["campaignId"]
+        n_id["externalCampaignId"]
         n_name["campaignName"]
         n_spend["spend"]
         n_impr["impressions"]
@@ -22,9 +20,8 @@ flowchart LR
         n_conv["conversions"]
         n_val["conversionValue"]
     end
-    m_const -- "meta" --> n_channel
     m_date -- "as is" --> n_date
-    m_id -- "as is" --> n_id
+    m_id -- "prefix meta/" --> n_id
     m_name -- "as is" --> n_name
     m_spend -- "string to number" --> n_spend
     m_impr -- "string to number" --> n_impr
