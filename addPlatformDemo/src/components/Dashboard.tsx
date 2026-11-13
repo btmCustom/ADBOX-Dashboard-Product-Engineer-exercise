@@ -5,12 +5,10 @@ import { CHANNEL_LABEL, CHANNELS, type Channel } from "@/lib/channels";
 import type { DashboardCampaign } from "@/lib/dashboardData";
 import type { ReportGroup } from "@/lib/groups";
 import type { NormalizedRow } from "@/lib/ingest";
-import { formatMetric, METRIC_BY_KEY, sumRows, type MetricKey } from "@/lib/metrics";
+import { formatMetric, METRICS, sumRows } from "@/lib/metrics";
 import { MetricChart } from "./MetricChart";
 import { TotalsTable } from "./TotalsTable";
 import { Panel, Select } from "./ui";
-
-const KPIS: MetricKey[] = ["spend", "conversions", "cpa", "roas"];
 
 type ChannelFilter = "all" | Channel;
 type InitiativeFilter = "all" | string;
@@ -71,12 +69,12 @@ export function Dashboard({ rows, campaigns, groups }: Props) {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        {KPIS.map((key) => (
-          <div key={key} className="rounded-lg border border-zinc-200 bg-white p-4">
-            <div className="text-xs uppercase tracking-wide text-zinc-500">{METRIC_BY_KEY[key].label}</div>
-            <div className="mt-1 text-2xl font-semibold tabular-nums">
-              {formatMetric(METRIC_BY_KEY[key], totals)}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        {METRICS.map((metric) => (
+          <div key={metric.key} className="rounded-lg border border-zinc-200 bg-white p-4">
+            <div className="text-xs uppercase tracking-wide text-zinc-500">{metric.label}</div>
+            <div className="mt-1 text-xl font-semibold tabular-nums sm:text-2xl">
+              {formatMetric(metric, totals)}
             </div>
           </div>
         ))}
