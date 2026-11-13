@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { CHANNEL_LABEL, CHANNELS } from "@/lib/channels";
 import type { DashboardCampaign } from "@/lib/dashboardData";
 import type { ReportGroup } from "@/lib/groups";
@@ -45,6 +48,10 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
       })),
     }));
 
+  const [open, setOpen] = useState<Record<string, boolean>>({});
+  const isOpen = (key: string) => open[key] ?? false;
+  const toggle = (key: string) => setOpen((prev) => ({ ...prev, [key]: !isOpen(key) }));
+
   const channelsReconcile = sections.every((s) => totalsMatch(sumRows(s.channels.map((c) => c.total)), s.total));
   const groupsReconcile = totalsMatch(sumRows(sections.map((s) => s.total)), grandTotal);
   const reconciles = channelsReconcile && groupsReconcile;
@@ -63,28 +70,54 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
               ))}
             </tr>
           </thead>
-          {sections.map(({ group, total, channels }) => (
-            <tbody key={group.key} className="border-b border-zinc-200">
-              <tr className="bg-zinc-50 font-medium">
-                <td className="whitespace-nowrap py-2 pr-3">
-                  {GROUP_TAG[group.kind] ? (
-                    <span className={`rounded px-2 py-0.5 text-xs font-medium ${GROUP_TAG[group.kind]}`}>
-                      {group.label}
-                    </span>
-                  ) : (
-                    group.label
-                  )}
-                </td>
-                <MetricCells totals={total} />
-              </tr>
-              {channels.map(({ channel, total: channelTotal }) => (
-                <tr key={channel} className="text-zinc-600">
-                  <td className="whitespace-nowrap py-2 pl-5 pr-3">{CHANNEL_LABEL[channel]}</td>
-                  <MetricCells totals={channelTotal} />
+          {sections.map(({ group, total, channels }) => {
+            const expanded = isOpen(group.key);
+            const label = GROUP_TAG[group.kind] ? (
+              <span className={`rounded px-2 py-0.5 text-xs font-medium ${GROUP_TAG[group.kind]}`}>
+                {group.label}
+              </span>
+            ) : (
+              group.label
+            );
+
+            return (
+              <tbody key={group.key} className="border-b border-zinc-200">
+                <tr className="bg-zinc-50 font-medium">
+                  <td className="whitespace-nowrap py-2 pr-3">
+                    {channels.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => toggle(group.key)}
+                        aria-expanded={expanded}
+                        className="inline-flex items-center gap-1.5 text-left hover:text-zinc-700"
+                      >
+                        <span
+                          aria-hidden
+                          className={`inline-block text-zinc-400 transition-transform ${expanded ? "rotate-90" : ""}`}
+                        >
+                          ▸
+                        </span>
+                        {label}
+                        <span className="text-xs font-normal text-zinc-400">
+                          ({channels.length} channel{channels.length === 1 ? "" : "s"})
+                        </span>
+                      </button>
+                    ) : (
+                      label
+                    )}
+                  </td>
+                  <MetricCells totals={total} />
                 </tr>
-              ))}
-            </tbody>
-          ))}
+                {expanded &&
+                  channels.map(({ channel, total: channelTotal }) => (
+                    <tr key={channel} className="text-zinc-600">
+                      <td className="whitespace-nowrap py-2 pl-7 pr-3">{CHANNEL_LABEL[channel]}</td>
+                      <MetricCells totals={channelTotal} />
+                    </tr>
+                  ))}
+              </tbody>
+            );
+          })}
           <tfoot>
             <tr className="border-t-2 border-zinc-300 font-semibold">
               <td className="py-2 pr-3">Grand total</td>
