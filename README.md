@@ -78,3 +78,16 @@ in one pass, rather than collected inside each of the three platform loaders.
 
 Revisit only if rows can no longer be held in memory (for example streaming a large backfill). Even then, the
 fix is one shared collector fed from a single import loop, not campaign logic in each loader.
+
+### In production, rows and campaigns live in a database
+
+Here everything is rebuilt from the files on each load. In production both would be persisted so they can be
+read directly instead of recomputed:
+
+- **`normalized_rows`**: one row per `externalCampaignId` + `date`, upserted on each import so re-pulled days
+  replace the old values.
+- **`campaigns`**: one row per `externalCampaignId` with its current name, first/last seen dates and the
+  assigned `internalCampaignId` and match status. Upserted from new rows after each import, so a campaign
+  that has never been seen appears immediately as unmatched.
+- **`internal_campaigns`** and **`campaign_overrides`**: what `src/config/` holds today, moved to tables so
+  mappings can be edited without a deploy.
