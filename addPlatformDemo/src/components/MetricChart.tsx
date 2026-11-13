@@ -17,7 +17,7 @@ import type { DashboardCampaign } from "@/lib/dashboardData";
 import type { ReportGroup } from "@/lib/groups";
 import type { NormalizedRow } from "@/lib/ingest";
 import { groupTotals, METRIC_BY_KEY, METRICS, type MetricDef, type MetricKey } from "@/lib/metrics";
-import { Select } from "./ui";
+import { EmptyState, Select } from "./ui";
 
 type Dimension = "channel" | "initiative" | "campaign" | "day" | "week";
 
@@ -111,7 +111,7 @@ export function MetricChart({ rows, campaignOf, groups }: Props) {
 
   return (
     <div>
-      <div className="mb-4 flex flex-wrap gap-4">
+      <div className="mb-5 flex flex-wrap items-end gap-4">
         <Select
           label="Metric"
           value={metricKey}
@@ -120,39 +120,79 @@ export function MetricChart({ rows, campaignOf, groups }: Props) {
         />
         <Select label="Break out by" value={dimension} options={DIMENSIONS} onChange={setDimension} />
       </div>
-      <h3 className="mb-2 text-sm text-zinc-500">
+      <h3 className="mb-3 text-sm font-medium text-zinc-700">
         {metric.label} by {DIMENSIONS.find((d) => d.value === dimension)!.label.toLowerCase()}
       </h3>
 
-      {isTime ? (
+      {points.length === 0 ? (
+        <EmptyState title="Nothing to chart" detail="No rows match the current filters." />
+      ) : isTime ? (
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={points} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
             <CartesianGrid vertical={false} stroke="#e4e4e7" />
-            <XAxis dataKey="label" tick={{ fontSize: 12 }} minTickGap={24} />
-            <YAxis tickFormatter={metric.axisFormat} tick={{ fontSize: 12 }} width={72} />
-            <Tooltip formatter={tooltipFormatter} />
-            <Line dataKey="value" stroke={COLOR} strokeWidth={2} dot={dimension === "week"} type="linear" />
+            <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#71717a" }} minTickGap={24} />
+            <YAxis
+              tickFormatter={metric.axisFormat}
+              tick={{ fontSize: 12, fill: "#71717a" }}
+              width={72}
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              formatter={tooltipFormatter}
+              contentStyle={{
+                borderRadius: 8,
+                borderColor: "#e4e4e7",
+                fontSize: 13,
+              }}
+            />
+            <Line
+              dataKey="value"
+              stroke={COLOR}
+              strokeWidth={2}
+              dot={dimension === "week"}
+              type="linear"
+              isAnimationActive={false}
+            />
           </LineChart>
         </ResponsiveContainer>
       ) : (
         <ResponsiveContainer width="100%" height={Math.max(160, points.length * 36 + 32)}>
           <BarChart data={points} layout="vertical" margin={{ top: 0, right: 72, bottom: 0, left: 0 }}>
             <CartesianGrid horizontal={false} stroke="#e4e4e7" />
-            <XAxis type="number" tickFormatter={metric.axisFormat} tick={{ fontSize: 12 }} />
+            <XAxis
+              type="number"
+              tickFormatter={metric.axisFormat}
+              tick={{ fontSize: 12, fill: "#71717a" }}
+              axisLine={false}
+              tickLine={false}
+            />
             <YAxis
               type="category"
               dataKey="label"
               width={dimension === "campaign" ? 280 : 180}
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: "#3f3f46" }}
+              axisLine={false}
+              tickLine={false}
             />
-            <Tooltip formatter={tooltipFormatter} cursor={{ fill: "#f4f4f5" }} />
+            <Tooltip
+              formatter={tooltipFormatter}
+              cursor={{ fill: "#f4f4f5" }}
+              contentStyle={{
+                borderRadius: 8,
+                borderColor: "#e4e4e7",
+                fontSize: 13,
+              }}
+            />
             <Bar
               dataKey="value"
               fill={COLOR}
               radius={[0, 4, 4, 0]}
+              isAnimationActive={false}
               label={{
                 position: "right",
                 fontSize: 12,
+                fill: "#52525b",
                 formatter: (v: unknown) => (typeof v === "number" ? metric.format(v) : ""),
               }}
             />

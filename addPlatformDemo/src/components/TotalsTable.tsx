@@ -73,12 +73,12 @@ function SortHeader({
       <button
         type="button"
         onClick={() => onSort(column)}
-        className={`inline-flex items-center gap-1 uppercase tracking-wide hover:text-zinc-800 ${
+        className={`-mx-1 inline-flex items-center gap-1 rounded px-1 py-0.5 uppercase tracking-wide hover:bg-zinc-100 hover:text-zinc-800 focus:ring-2 focus:ring-sky-600/20 focus:outline-none ${
           align === "right" ? "flex-row-reverse" : ""
         } ${active ? "text-zinc-800" : ""}`}
       >
         {label}
-        <span aria-hidden className="w-3 text-center text-[10px] text-zinc-400">
+        <span aria-hidden className={`w-3 text-center text-[10px] ${active ? "text-sky-700" : "text-zinc-300"}`}>
           {active ? (sort.dir === "asc" ? "▲" : "▼") : "◇"}
         </span>
       </button>
@@ -183,7 +183,7 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
                         </span>
                         {label}
                         <span className="text-xs font-normal text-zinc-400">
-                          ({channels.length} channel{channels.length === 1 ? "" : "s"})
+                          ({channels.length === 1 ? "1 channel" : `${channels.length} channels`})
                         </span>
                       </button>
                     ) : (
@@ -194,7 +194,7 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
                 </tr>
                 {expanded &&
                   channels.map(({ channel, total: channelTotal }: { channel: Channel; total: Metrics }) => (
-                    <tr key={channel} className="text-zinc-600">
+                    <tr key={channel} className="text-zinc-600 hover:bg-zinc-50">
                       <td className="whitespace-nowrap py-2 pl-7 pr-3">{CHANNEL_LABEL[channel]}</td>
                       <MetricCells totals={channelTotal} />
                     </tr>
