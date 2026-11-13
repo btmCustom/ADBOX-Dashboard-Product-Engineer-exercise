@@ -1,8 +1,8 @@
 import { loadDashboardData } from "@/lib/dashboardData";
-import { channelOf, type Channel } from "@/lib/ingest";
+import { Dashboard } from "@/components/Dashboard";
+import { Panel } from "@/components/ui";
+import { CHANNEL_LABEL, channelOf } from "@/lib/channels";
 import type { MatchStatus } from "@/lib/matching";
-
-const CHANNEL_LABEL: Record<Channel, string> = { meta: "Meta", google: "Google Ads", amazon: "Amazon DSP" };
 
 const STATUS_STYLE: Record<MatchStatus, { label: string; className: string }> = {
   auto: { label: "Auto", className: "bg-emerald-50 text-emerald-700" },
@@ -12,47 +12,9 @@ const STATUS_STYLE: Record<MatchStatus, { label: string; className: string }> = 
 };
 
 const usd = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-const usdCents = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
-const count = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
-
-function ratio(numerator: number, denominator: number): number | null {
-  return denominator === 0 ? null : numerator / denominator;
-}
-
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-lg border border-zinc-200 bg-white p-5">
-      <h2 className="mb-3 text-sm font-semibold text-zinc-700">{title}</h2>
-      {children}
-    </section>
-  );
-}
-
-function Placeholder({ label, height = "h-40" }: { label: string; height?: string }) {
-  return (
-    <div
-      className={`flex ${height} items-center justify-center rounded-md border border-dashed border-zinc-300 text-sm text-zinc-400`}
-    >
-      {label}
-    </div>
-  );
-}
 
 export default function Home() {
-  const { rows, campaigns, internalCampaigns } = loadDashboardData();
-
-  const totals = rows.reduce(
-    (t, r) => ({ spend: t.spend + r.spend, conversions: t.conversions + r.conversions, value: t.value + r.conversionValue }),
-    { spend: 0, conversions: 0, value: 0 },
-  );
-  const cpa = ratio(totals.spend, totals.conversions);
-  const roas = ratio(totals.value, totals.spend);
-  const kpis = [
-    { label: "Spend", value: usd.format(totals.spend) },
-    { label: "Conversions", value: count.format(totals.conversions) },
-    { label: "CPA", value: cpa === null ? "—" : usdCents.format(cpa) },
-    { label: "ROAS", value: roas === null ? "—" : `${roas.toFixed(2)}×` },
-  ];
+  const { rows, campaigns, internalCampaigns, groups, dashboardCampaigns } = loadDashboardData();
 
   const spendByCampaign = new Map<string, number>();
   for (const r of rows) {
@@ -81,29 +43,9 @@ export default function Home() {
       </header>
 
       <main className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-6">
-        <div className="flex gap-3">
-          <Placeholder label="Channel filter" height="h-10 w-48" />
-          <Placeholder label="Initiative filter" height="h-10 w-48" />
-        </div>
+        <Dashboard rows={rows} campaigns={dashboardCampaigns} groups={groups} />
 
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-          {kpis.map((kpi) => (
-            <div key={kpi.label} className="rounded-lg border border-zinc-200 bg-white p-4">
-              <div className="text-xs uppercase tracking-wide text-zinc-500">{kpi.label}</div>
-              <div className="mt-1 text-2xl font-semibold tabular-nums">{kpi.value}</div>
-            </div>
-          ))}
-        </div>
-
-        <Panel title="Chart">
-          <Placeholder label="Metric × dimension chart" height="h-72" />
-        </Panel>
-
-        <Panel title="Totals by initiative and channel">
-          <Placeholder label="Totals table" />
-        </Panel>
-
-        <Panel title={`Campaigns (${campaigns.length})`}>
+        <Panel title={`Campaign matching (${campaigns.length} campaigns)`}>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-zinc-200 text-xs uppercase tracking-wide text-zinc-500">

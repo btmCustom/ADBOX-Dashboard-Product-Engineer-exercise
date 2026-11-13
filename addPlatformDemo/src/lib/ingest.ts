@@ -1,23 +1,19 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { toExternalCampaignId } from "./channels";
 
-export type Channel = "meta" | "google" | "amazon";
-
-export const SHORT_CHANNEL: Record<Channel, string> = {
-  meta: "meta",
-  google: "gads",
-  amazon: "amzn",
-};
-
-export interface NormalizedRow {
-  date: string; // YYYY-MM-DD
-  externalCampaignId: string; // `${shortChannel}/${platform campaign id}`, e.g. "gads/43800084505"
-  campaignName: string;
+export interface Metrics {
   spend: number; // USD
   impressions: number;
   clicks: number;
   conversions: number;
   conversionValue: number; // USD
+}
+
+export interface NormalizedRow extends Metrics {
+  date: string; // YYYY-MM-DD
+  externalCampaignId: string; // `${shortChannel}/${platform campaign id}`, e.g. "gads/43800084505"
+  campaignName: string;
 }
 
 const DATA_DIR = path.join(process.cwd(), "..");
@@ -27,17 +23,6 @@ const DATA_DIR = path.join(process.cwd(), "..");
 export const META_CONVERSION_ACTION = "lead";
 
 const MICROS_PER_USD = 1_000_000;
-
-export function toExternalCampaignId(channel: Channel, platformId: string): string {
-  return `${SHORT_CHANNEL[channel]}/${platformId}`;
-}
-
-export function channelOf(externalCampaignId: string): Channel {
-  const short = externalCampaignId.split("/")[0];
-  const channel = (Object.keys(SHORT_CHANNEL) as Channel[]).find((c) => SHORT_CHANNEL[c] === short);
-  if (!channel) throw new Error(`Unknown channel prefix in ${externalCampaignId}`);
-  return channel;
-}
 
 function toNumber(value: string | undefined, field: string): number {
   const n = Number(value ?? 0);
