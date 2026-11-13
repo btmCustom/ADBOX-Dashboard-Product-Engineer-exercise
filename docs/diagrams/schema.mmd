@@ -1,0 +1,57 @@
+erDiagram
+    META_INSIGHT ||--o{ META_ACTION : "actions[]"
+    META_INSIGHT ||--o{ META_ACTION_VALUE : "action_values[]"
+    META_INSIGHT ||--|| NORMALIZED_ROW : "loadMeta()"
+    GOOGLE_ADS_ROW ||--|| NORMALIZED_ROW : "loadGoogle()"
+    AMAZON_DSP_ROW ||--|| NORMALIZED_ROW : "loadAmazon()"
+
+    META_INSIGHT {
+        string campaign_id PK
+        string campaign_name
+        string spend "USD, as string"
+        string impressions "as string"
+        string clicks "as string"
+        string reach "dropped"
+        string date_start PK "YYYY-MM-DD"
+        string date_stop "dropped, equals date_start"
+    }
+    META_ACTION {
+        string action_type "link_click, landing_page_view, lead, offsite_conversion.fb_pixel_lead"
+        string value "count"
+    }
+    META_ACTION_VALUE {
+        string action_type "lead only"
+        string value "USD"
+    }
+    GOOGLE_ADS_ROW {
+        int campaign_id PK "campaign.id"
+        string campaign_name "campaign.name"
+        string campaign_status "campaign.status, dropped"
+        date segments_date PK "segments.date, YYYY-MM-DD"
+        int metrics_cost_micros "metrics.cost_micros"
+        int metrics_impressions "metrics.impressions"
+        int metrics_clicks "metrics.clicks"
+        float metrics_conversions "metrics.conversions, fractional"
+        float metrics_conversions_value "metrics.conversions_value"
+    }
+    AMAZON_DSP_ROW {
+        string date PK "MM/DD/YYYY"
+        int orderId PK
+        string orderName
+        float totalCost "USD"
+        int impressions
+        int clickThroughs
+        int offAmazonConversions14d "14-day window"
+        float offAmazonConversionValue14d "14-day window"
+    }
+    NORMALIZED_ROW {
+        string channel "meta, google, amazon"
+        string date PK "YYYY-MM-DD"
+        string campaignId PK
+        string campaignName
+        float spend "USD"
+        int impressions
+        int clicks
+        float conversions
+        float conversionValue "USD"
+    }

@@ -1,0 +1,35 @@
+flowchart LR
+    subgraph SRC["meta_insights.json, data[]"]
+        m_const["constant"]
+        m_date["date_start"]
+        m_id["campaign_id"]
+        m_name["campaign_name"]
+        m_spend["spend"]
+        m_impr["impressions"]
+        m_clicks["clicks"]
+        m_conv["actions[] where action_type = lead"]
+        m_val["action_values[] where action_type = lead"]
+        m_drop["not used: reach, date_stop,<br/>link_click (duplicates clicks),<br/>landing_page_view,<br/>offsite_conversion.fb_pixel_lead (duplicates lead)"]
+    end
+    subgraph OUT["NormalizedRow"]
+        n_channel["channel"]
+        n_date["date"]
+        n_id["campaignId"]
+        n_name["campaignName"]
+        n_spend["spend"]
+        n_impr["impressions"]
+        n_clicks["clicks"]
+        n_conv["conversions"]
+        n_val["conversionValue"]
+    end
+    m_const -- "meta" --> n_channel
+    m_date -- "as is" --> n_date
+    m_id -- "as is" --> n_id
+    m_name -- "as is" --> n_name
+    m_spend -- "string to number" --> n_spend
+    m_impr -- "string to number" --> n_impr
+    m_clicks -- "string to number" --> n_clicks
+    m_conv -- ".value to number, 0 if absent" --> n_conv
+    m_val -- ".value to number, 0 if absent" --> n_val
+    classDef dropped fill:#f4f4f5,stroke:#a1a1aa,stroke-dasharray:4 3,color:#71717a
+    class m_drop dropped

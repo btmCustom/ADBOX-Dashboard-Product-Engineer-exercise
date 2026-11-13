@@ -1,0 +1,35 @@
+flowchart LR
+    subgraph SRC["google_ads.csv"]
+        g_const["constant"]
+        g_date["segments.date"]
+        g_id["campaign.id"]
+        g_name["campaign.name"]
+        g_spend["metrics.cost_micros"]
+        g_impr["metrics.impressions"]
+        g_clicks["metrics.clicks"]
+        g_conv["metrics.conversions"]
+        g_val["metrics.conversions_value"]
+        g_drop["not used: campaign.status<br/>(ENABLED on every row)"]
+    end
+    subgraph OUT["NormalizedRow"]
+        n_channel["channel"]
+        n_date["date"]
+        n_id["campaignId"]
+        n_name["campaignName"]
+        n_spend["spend"]
+        n_impr["impressions"]
+        n_clicks["clicks"]
+        n_conv["conversions"]
+        n_val["conversionValue"]
+    end
+    g_const -- "google" --> n_channel
+    g_date -- "as is" --> n_date
+    g_id -- "as is" --> n_id
+    g_name -- "as is" --> n_name
+    g_spend -- "divide by 1,000,000" --> n_spend
+    g_impr -- "to number" --> n_impr
+    g_clicks -- "to number" --> n_clicks
+    g_conv -- "to number, keeps fractions" --> n_conv
+    g_val -- "to number" --> n_val
+    classDef dropped fill:#f4f4f5,stroke:#a1a1aa,stroke-dasharray:4 3,color:#71717a
+    class g_drop dropped
