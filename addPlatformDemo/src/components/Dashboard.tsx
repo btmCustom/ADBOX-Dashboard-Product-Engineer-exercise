@@ -8,7 +8,7 @@ import type { NormalizedRow } from "@/lib/ingest";
 import { formatMetric, METRICS, sumRows } from "@/lib/metrics";
 import { MetricChart } from "./MetricChart";
 import { TotalsTable } from "./TotalsTable";
-import { EmptyState, Panel, Select } from "./ui";
+import { Button, EmptyState, Panel, Select } from "./ui";
 
 type ChannelFilter = "all" | Channel;
 type InitiativeFilter = "all" | string;
@@ -49,14 +49,10 @@ export function Dashboard({ rows, campaigns, groups }: Props) {
   const channelLabel = channel === "all" ? "All channels" : CHANNEL_LABEL[channel];
   const initiativeLabel =
     initiative === "all" ? "All initiatives" : (groups.find((g) => g.key === initiative)?.label ?? initiative);
-  const clearFilters = () => {
-    setChannel("all");
-    setInitiative("all");
-  };
 
   return (
     <>
-      <section className="rounded-xl border border-zinc-200 bg-white p-4 shadow-sm sm:p-5">
+      <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs sm:p-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-wrap gap-4">
             <Select
@@ -79,21 +75,23 @@ export function Dashboard({ rows, campaigns, groups }: Props) {
             />
           </div>
           {filtersActive ? (
-            <button
-              type="button"
-              onClick={clearFilters}
-              className="h-10 rounded-lg px-3 text-sm font-medium text-sky-700 hover:bg-sky-50 focus:ring-2 focus:ring-sky-600/20 focus:outline-none"
+            <Button
+              variant="link"
+              onClick={() => {
+                setChannel("all");
+                setInitiative("all");
+              }}
             >
               Clear filters
-            </button>
+            </Button>
           ) : null}
         </div>
-        <p className="mt-3 text-sm text-zinc-500">
-          Showing <span className="font-medium text-zinc-700">{channelLabel}</span>
+        <p className="mt-4 text-sm text-gray-600">
+          Showing <span className="font-medium text-gray-900">{channelLabel}</span>
           {" · "}
-          <span className="font-medium text-zinc-700">{initiativeLabel}</span>
+          <span className="font-medium text-gray-900">{initiativeLabel}</span>
           {filtersActive ? (
-            <span className="text-zinc-400">
+            <span className="text-gray-500">
               {" "}
               ({filteredRows.length.toLocaleString()} of {rows.length.toLocaleString()} daily rows)
             </span>
@@ -109,16 +107,14 @@ export function Dashboard({ rows, campaigns, groups }: Props) {
       ) : (
         <>
           <section aria-label="Headline metrics">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
               {METRICS.map((metric) => (
                 <div
                   key={metric.key}
-                  className="rounded-xl border border-zinc-200 bg-white px-4 py-3 shadow-sm"
+                  className="rounded-xl border border-gray-200 bg-white p-5 shadow-xs"
                 >
-                  <div className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                    {metric.label}
-                  </div>
-                  <div className="mt-1 text-xl font-semibold tracking-tight tabular-nums text-zinc-900 sm:text-2xl">
+                  <div className="text-sm font-medium text-gray-600">{metric.label}</div>
+                  <div className="mt-2 text-2xl font-semibold tracking-tight text-gray-900 tabular-nums sm:text-3xl">
                     {formatMetric(metric, totals)}
                   </div>
                 </div>

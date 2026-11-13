@@ -1,15 +1,21 @@
 import { loadDashboardData } from "@/lib/dashboardData";
 import { Dashboard } from "@/components/Dashboard";
-import { Panel } from "@/components/ui";
+import { Badge, Panel } from "@/components/ui";
 import { CHANNEL_LABEL, channelOf } from "@/lib/channels";
 import type { MatchStatus } from "@/lib/matching";
 
 const REVIEW_STATUSES = new Set<MatchStatus>(["manual", "ambiguous", "unmatched"]);
 
-const STATUS_STYLE: Record<"manual" | "ambiguous" | "unmatched", { label: string; className: string }> = {
-  manual: { label: "Manual", className: "bg-sky-50 text-sky-800 ring-1 ring-sky-200" },
-  ambiguous: { label: "Ambiguous", className: "bg-amber-50 text-amber-900 ring-1 ring-amber-200" },
-  unmatched: { label: "Unmatched", className: "bg-zinc-100 text-zinc-700 ring-1 ring-zinc-200" },
+const STATUS_TONE: Record<"manual" | "ambiguous" | "unmatched", "blue" | "warning" | "gray"> = {
+  manual: "blue",
+  ambiguous: "warning",
+  unmatched: "gray",
+};
+
+const STATUS_LABEL: Record<"manual" | "ambiguous" | "unmatched", string> = {
+  manual: "Manual",
+  ambiguous: "Ambiguous",
+  unmatched: "Unmatched",
 };
 
 const STATUS_ORDER: Record<"manual" | "ambiguous" | "unmatched", number> = {
@@ -43,32 +49,40 @@ export default function Home() {
   const manualCount = reviewCampaigns.filter((c) => c.matchStatus === "manual").length;
 
   return (
-    <div className="min-h-full flex-1 bg-zinc-50 font-sans text-zinc-900">
-      <header className="border-b border-zinc-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col gap-1 px-6 py-5">
-          <p className="text-xs font-medium tracking-wide text-zinc-500 uppercase">ADBOX Dashboard</p>
-          <h1 className="text-xl font-semibold tracking-tight text-zinc-900">Harbor Point Bank · Paid Media</h1>
-          <p className="text-sm text-zinc-500">
+    <div className="min-h-full flex-1 bg-gray-50 font-sans text-gray-900">
+      <header className="border-b border-gray-200 bg-white">
+        <div className="mx-auto flex max-w-6xl flex-col gap-1 px-6 py-6">
+          <p className="text-sm font-semibold text-brand-700">ADBOX Dashboard</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">
+            Harbor Point Bank · Paid Media
+          </h1>
+          <p className="text-base text-gray-600">
             Meta, Google Ads and Amazon DSP · Aug 1 – Sep 29, 2026
           </p>
         </div>
       </header>
 
-      <main className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-6">
+      <main className="mx-auto flex max-w-6xl flex-col gap-6 px-6 py-8">
         {reviewCampaigns.length > 0 ? (
           <div
             role="status"
-            className="flex gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm"
+            className="flex gap-4 rounded-xl border border-warning-100 bg-warning-25 p-4 shadow-xs"
           >
             <span
               aria-hidden
-              className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-200 text-xs font-bold text-amber-900"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning-100 text-warning-700"
             >
-              !
+              <svg viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
+                <path
+                  fillRule="evenodd"
+                  d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.168 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 6a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 6Zm0 8a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z"
+                  clipRule="evenodd"
+                />
+              </svg>
             </span>
             <div>
-              <p className="font-semibold">Campaign matching needs attention</p>
-              <p className="mt-1 text-amber-900/80">
+              <p className="text-sm font-semibold text-gray-900">Campaign matching needs attention</p>
+              <p className="mt-1 text-sm text-gray-600">
                 {[
                   `${ambiguousCount} ambiguous`,
                   `${unmatchedCount} unmatched`,
@@ -77,7 +91,7 @@ export default function Home() {
                   .filter(Boolean)
                   .join(", ")}
                 . These sit in Ambiguous / Unmatched totals (or their override initiative) until mapped in{" "}
-                <code className="rounded bg-amber-100/80 px-1.5 py-0.5 font-mono text-xs">
+                <code className="rounded-md bg-warning-100 px-1.5 py-0.5 font-mono text-xs text-warning-700">
                   src/config/campaignOverrides.ts
                 </code>
                 .
@@ -87,7 +101,7 @@ export default function Home() {
         ) : (
           <div
             role="status"
-            className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 shadow-sm"
+            className="rounded-xl border border-success-100 bg-success-25 px-4 py-3 text-sm text-success-700 shadow-xs"
           >
             All campaigns matched automatically.
           </div>
@@ -100,46 +114,42 @@ export default function Home() {
           >
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="border-b border-zinc-200 text-xs tracking-wide text-zinc-500 uppercase">
-                  <tr>
-                    <th className="py-2.5 pr-4 font-medium">Initiative</th>
-                    <th className="py-2.5 pr-4 font-medium">Match</th>
-                    <th className="py-2.5 pr-4 font-medium">Channel</th>
-                    <th className="py-2.5 pr-4 font-medium">Campaign</th>
-                    <th className="py-2.5 pr-4 text-right font-medium">Spend</th>
+                <thead className="border-b border-gray-200">
+                  <tr className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                    <th className="pb-3 pr-4 font-medium">Initiative</th>
+                    <th className="pb-3 pr-4 font-medium">Match</th>
+                    <th className="pb-3 pr-4 font-medium">Channel</th>
+                    <th className="pb-3 pr-4 font-medium">Campaign</th>
+                    <th className="pb-3 text-right font-medium">Spend</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-zinc-100">
+                <tbody className="divide-y divide-gray-200">
                   {reviewCampaigns.map((c) => {
-                    const status = STATUS_STYLE[c.matchStatus as keyof typeof STATUS_STYLE];
+                    const status = c.matchStatus as keyof typeof STATUS_TONE;
                     return (
-                      <tr key={c.id} className="hover:bg-zinc-50">
-                        <td className="py-2.5 pr-4">
+                      <tr key={c.id} className="hover:bg-gray-50">
+                        <td className="py-4 pr-4 text-gray-700">
                           {c.internalCampaignId ? (
                             initiativeName.get(c.internalCampaignId)
                           ) : c.candidates.length > 0 ? (
-                            <span className="text-amber-800">
+                            <span className="font-medium text-warning-700">
                               {c.candidates.map((id) => initiativeName.get(id)).join(" or ")}?
                             </span>
                           ) : (
-                            <span className="text-zinc-400">None</span>
+                            <span className="text-gray-400">None</span>
                           )}
                         </td>
-                        <td className="py-2.5 pr-4">
-                          <span
-                            className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${status.className}`}
-                          >
-                            {status.label}
-                          </span>
+                        <td className="py-4 pr-4">
+                          <Badge tone={STATUS_TONE[status]}>{STATUS_LABEL[status]}</Badge>
                         </td>
-                        <td className="whitespace-nowrap py-2.5 pr-4 text-zinc-600">
+                        <td className="whitespace-nowrap py-4 pr-4 text-gray-600">
                           {CHANNEL_LABEL[channelOf(c.id)]}
                         </td>
-                        <td className="py-2.5 pr-4">
-                          <div className="font-medium text-zinc-900">{c.name}</div>
-                          <div className="font-mono text-xs text-zinc-400">{c.id}</div>
+                        <td className="py-4 pr-4">
+                          <div className="font-medium text-gray-900">{c.name}</div>
+                          <div className="mt-0.5 font-mono text-xs text-gray-500">{c.id}</div>
                         </td>
-                        <td className="py-2.5 pr-4 text-right tabular-nums text-zinc-900">
+                        <td className="py-4 text-right font-medium tabular-nums text-gray-900">
                           {usd.format(spendByCampaign.get(c.id) ?? 0)}
                         </td>
                       </tr>

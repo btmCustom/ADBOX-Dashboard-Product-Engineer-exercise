@@ -99,7 +99,7 @@ function chartPoints(
   }
 }
 
-const COLOR = "#0369a1";
+const COLOR = "#7F56D9"; // Untitled UI brand-600
 
 export function MetricChart({ rows, campaignOf, groups }: Props) {
   const [metricKey, setMetricKey] = useState<MetricKey>("roas");
@@ -120,7 +120,7 @@ export function MetricChart({ rows, campaignOf, groups }: Props) {
         />
         <Select label="Break out by" value={dimension} options={DIMENSIONS} onChange={setDimension} />
       </div>
-      <h3 className="mb-3 text-sm font-medium text-zinc-700">
+      <h3 className="mb-4 text-sm font-semibold text-gray-900">
         {metric.label} by {DIMENSIONS.find((d) => d.value === dimension)!.label.toLowerCase()}
       </h3>
 
@@ -129,11 +129,11 @@ export function MetricChart({ rows, campaignOf, groups }: Props) {
       ) : isTime ? (
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={points} margin={{ top: 8, right: 16, bottom: 0, left: 0 }}>
-            <CartesianGrid vertical={false} stroke="#e4e4e7" />
-            <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#71717a" }} minTickGap={24} />
+            <CartesianGrid vertical={false} stroke="#E4E7EC" />
+            <XAxis dataKey="label" tick={{ fontSize: 12, fill: "#667085" }} minTickGap={24} />
             <YAxis
               tickFormatter={metric.axisFormat}
-              tick={{ fontSize: 12, fill: "#71717a" }}
+              tick={{ fontSize: 12, fill: "#667085" }}
               width={72}
               axisLine={false}
               tickLine={false}
@@ -142,7 +142,8 @@ export function MetricChart({ rows, campaignOf, groups }: Props) {
               formatter={tooltipFormatter}
               contentStyle={{
                 borderRadius: 8,
-                borderColor: "#e4e4e7",
+                borderColor: "#E4E7EC",
+                boxShadow: "0 1px 3px rgba(16, 24, 40, 0.1)",
                 fontSize: 13,
               }}
             />
@@ -157,13 +158,13 @@ export function MetricChart({ rows, campaignOf, groups }: Props) {
           </LineChart>
         </ResponsiveContainer>
       ) : (
-        <ResponsiveContainer width="100%" height={Math.max(160, points.length * 36 + 32)}>
+        <ResponsiveContainer width="100%" height={Math.max(160, points.length * 40 + 32)}>
           <BarChart data={points} layout="vertical" margin={{ top: 0, right: 72, bottom: 0, left: 0 }}>
-            <CartesianGrid horizontal={false} stroke="#e4e4e7" />
+            <CartesianGrid horizontal={false} stroke="#E4E7EC" />
             <XAxis
               type="number"
               tickFormatter={metric.axisFormat}
-              tick={{ fontSize: 12, fill: "#71717a" }}
+              tick={{ fontSize: 12, fill: "#667085" }}
               axisLine={false}
               tickLine={false}
             />
@@ -171,28 +172,29 @@ export function MetricChart({ rows, campaignOf, groups }: Props) {
               type="category"
               dataKey="label"
               width={dimension === "campaign" ? 280 : 180}
-              tick={{ fontSize: 12, fill: "#3f3f46" }}
+              tick={{ fontSize: 12, fill: "#344054" }}
               axisLine={false}
               tickLine={false}
             />
             <Tooltip
               formatter={tooltipFormatter}
-              cursor={{ fill: "#f4f4f5" }}
+              cursor={{ fill: "#F9FAFB" }}
               contentStyle={{
                 borderRadius: 8,
-                borderColor: "#e4e4e7",
+                borderColor: "#E4E7EC",
+                boxShadow: "0 1px 3px rgba(16, 24, 40, 0.1)",
                 fontSize: 13,
               }}
             />
             <Bar
               dataKey="value"
               fill={COLOR}
-              radius={[0, 4, 4, 0]}
+              radius={[0, 6, 6, 0]}
               isAnimationActive={false}
               label={{
                 position: "right",
                 fontSize: 12,
-                fill: "#52525b",
+                fill: "#475467",
                 formatter: (v: unknown) => (typeof v === "number" ? metric.format(v) : ""),
               }}
             />

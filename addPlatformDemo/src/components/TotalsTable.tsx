@@ -14,6 +14,7 @@ import {
   totalsMatch,
   type MetricKey,
 } from "@/lib/metrics";
+import { Badge } from "./ui";
 
 interface Props {
   rows: NormalizedRow[];
@@ -26,24 +27,17 @@ type SortDir = "asc" | "desc";
 
 function MetricCells({ totals }: { totals: Metrics }) {
   return METRICS.map((m) => (
-    <td key={m.key} className="whitespace-nowrap px-2 py-2 text-right tabular-nums">
+    <td key={m.key} className="whitespace-nowrap px-3 py-3 text-right tabular-nums text-gray-700">
       {formatMetric(m, totals)}
     </td>
   ));
 }
-
-const GROUP_TAG: Record<ReportGroup["kind"], string | null> = {
-  initiative: null,
-  ambiguous: "bg-amber-50 text-amber-800",
-  unmatched: "bg-zinc-100 text-zinc-600",
-};
 
 function metricValue(totals: Metrics, key: MetricKey): number | null {
   return METRIC_BY_KEY[key].value(totals);
 }
 
 function compareValues(a: number | null, b: number | null, dir: SortDir): number {
-  // Missing rates (e.g. CPA with 0 conversions) always sort last.
   if (a === null && b === null) return 0;
   if (a === null) return 1;
   if (b === null) return -1;
@@ -67,18 +61,20 @@ function SortHeader({
   const ariaSort = active ? (sort.dir === "asc" ? "ascending" : "descending") : "none";
   return (
     <th
-      className={`whitespace-nowrap px-2 py-2 font-medium ${align === "left" ? "pr-3 text-left" : "text-right"}`}
+      className={`whitespace-nowrap px-3 py-3 text-xs font-medium tracking-wide text-gray-500 uppercase ${
+        align === "left" ? "text-left" : "text-right"
+      }`}
       aria-sort={ariaSort}
     >
       <button
         type="button"
         onClick={() => onSort(column)}
-        className={`-mx-1 inline-flex items-center gap-1 rounded px-1 py-0.5 uppercase tracking-wide hover:bg-zinc-100 hover:text-zinc-800 focus:ring-2 focus:ring-sky-600/20 focus:outline-none ${
+        className={`-mx-1 inline-flex items-center gap-1 rounded-md px-1 py-0.5 hover:bg-gray-100 hover:text-gray-700 focus:ring-4 focus:ring-brand-100 focus:outline-none ${
           align === "right" ? "flex-row-reverse" : ""
-        } ${active ? "text-zinc-800" : ""}`}
+        } ${active ? "text-gray-700" : ""}`}
       >
         {label}
-        <span aria-hidden className={`w-3 text-center text-[10px] ${active ? "text-sky-700" : "text-zinc-300"}`}>
+        <span aria-hidden className={`w-3 text-center text-[10px] ${active ? "text-brand-600" : "text-gray-300"}`}>
           {active ? (sort.dir === "asc" ? "▲" : "▼") : "◇"}
         </span>
       </button>
@@ -101,8 +97,6 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
     );
   };
 
-  // Group totals and the grand total are summed from rows independently of the channel breakdown,
-  // so the reconciliation check below compares independent sums rather than restating one.
   const { sections, grandTotal } = useMemo(() => {
     const byGroup = groupTotals(rows, (r) => campaignOf(r.externalCampaignId).groupKey);
     const byGroupChannel = groupTotals(rows, (r) => {
@@ -146,7 +140,7 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
     <div>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="border-b border-zinc-200 text-xs text-zinc-500">
+          <thead className="border-b border-gray-200">
             <tr>
               <SortHeader label="Initiative / channel" column="label" sort={sort} align="left" onSort={onSort} />
               {METRICS.map((m) => (
@@ -156,33 +150,36 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
           </thead>
           {sections.map(({ group, total, channels }) => {
             const expanded = isOpen(group.key);
-            const label = GROUP_TAG[group.kind] ? (
-              <span className={`rounded px-2 py-0.5 text-xs font-medium ${GROUP_TAG[group.kind]}`}>
-                {group.label}
-              </span>
-            ) : (
-              group.label
-            );
+            const label =
+              group.kind === "ambiguous" ? (
+                <Badge tone="warning">{group.label}</Badge>
+              ) : group.kind === "unmatched" ? (
+                <Badge tone="gray">{group.label}</Badge>
+              ) : (
+                <span className="font-semibold text-gray-900">{group.label}</span>
+              );
 
             return (
-              <tbody key={group.key} className="border-b border-zinc-200">
-                <tr className="bg-zinc-50 font-medium">
-                  <td className="whitespace-nowrap py-2 pr-3">
+              <tbody key={group.key} className="border-b border-gray-200">
+                <tr className="bg-gray-25">
+                  <td className="whitespace-nowrap py-3 pr-3">
                     {channels.length > 0 ? (
                       <button
                         type="button"
                         onClick={() => toggle(group.key)}
                         aria-expanded={expanded}
-                        className="inline-flex items-center gap-1.5 text-left hover:text-zinc-700"
+                        className="inline-flex items-center gap-2 text-left hover:text-gray-700 focus:ring-4 focus:ring-brand-100 focus:outline-none"
                       >
                         <span
                           aria-hidden
-                          className={`inline-block text-zinc-400 transition-transform ${expanded ? "rotate-90" : ""}`}
+                          className={`inline-flex h-5 w-5 items-center justify-center rounded text-gray-400 transition-transform ${
+                            expanded ? "rotate-90" : ""
+                          }`}
                         >
                           ▸
                         </span>
                         {label}
-                        <span className="text-xs font-normal text-zinc-400">
+                        <span className="text-xs font-normal text-gray-500">
                           ({channels.length === 1 ? "1 channel" : `${channels.length} channels`})
                         </span>
                       </button>
@@ -194,8 +191,8 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
                 </tr>
                 {expanded &&
                   channels.map(({ channel, total: channelTotal }: { channel: Channel; total: Metrics }) => (
-                    <tr key={channel} className="text-zinc-600 hover:bg-zinc-50">
-                      <td className="whitespace-nowrap py-2 pl-7 pr-3">{CHANNEL_LABEL[channel]}</td>
+                    <tr key={channel} className="text-gray-600 hover:bg-gray-50">
+                      <td className="whitespace-nowrap py-3 pl-10 pr-3">{CHANNEL_LABEL[channel]}</td>
                       <MetricCells totals={channelTotal} />
                     </tr>
                   ))}
@@ -203,14 +200,14 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
             );
           })}
           <tfoot>
-            <tr className="border-t-2 border-zinc-300 font-semibold">
-              <td className="py-2 pr-3">Grand total</td>
+            <tr className="border-t-2 border-gray-300 font-semibold text-gray-900">
+              <td className="py-3.5 pr-3">Grand total</td>
               <MetricCells totals={grandTotal} />
             </tr>
           </tfoot>
         </table>
       </div>
-      <p className={`mt-3 text-xs ${reconciles ? "text-emerald-700" : "font-medium text-red-700"}`}>
+      <p className={`mt-4 text-sm ${reconciles ? "text-success-700" : "font-medium text-error-700"}`}>
         {reconciles
           ? "✓ Channel rows sum to each group, and groups sum to the grand total."
           : `Totals do not reconcile: ${channelsReconcile ? "" : "channel rows ≠ group totals. "}${
