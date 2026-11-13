@@ -23,56 +23,7 @@ export function Panel({
   );
 }
 
-export function Select<T extends string>({
-  label,
-  value,
-  options,
-  onChange,
-  className = "",
-}: {
-  label: string;
-  value: T;
-  options: { value: T; label: string }[];
-  onChange: (value: T) => void;
-  className?: string;
-}) {
-  const id = `select-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-  return (
-    <div className={`flex min-w-[11rem] flex-col gap-1.5 ${className}`}>
-      <label htmlFor={id} className="text-sm font-medium text-gray-700">
-        {label}
-      </label>
-      <div className="relative">
-        <select
-          id={id}
-          className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-white py-2.5 pr-10 pl-3.5 text-base text-gray-900 shadow-xs transition-colors hover:border-gray-400 focus:border-brand-300 focus:ring-4 focus:ring-brand-100 focus:outline-none"
-          value={value}
-          onChange={(e) => onChange(e.target.value as T)}
-        >
-          {options.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <svg
-          aria-hidden
-          viewBox="0 0 20 20"
-          fill="none"
-          className="pointer-events-none absolute top-1/2 right-3.5 h-5 w-5 -translate-y-1/2 text-gray-500"
-        >
-          <path
-            d="M5 7.5 10 12.5 15 7.5"
-            stroke="currentColor"
-            strokeWidth="1.67"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </div>
-    </div>
-  );
-}
+export { Select } from "./Select";
 
 export function Badge({
   children,
