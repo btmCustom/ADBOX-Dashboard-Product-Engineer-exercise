@@ -58,3 +58,23 @@ This is an exercise only. We will not use your code or ideas in our product, and
 ## Questions
 
 Reply to the email that sent you this exercise. We respond within one business day. If you have to make an assumption, write it down in your design doc and keep going.
+
+## Build decisions
+
+### Campaigns are built after normalization, not inside each platform loader
+
+The campaign list (`buildCampaigns` in `addPlatformDemo/src/lib/campaigns.ts`) is derived from normalized rows
+in one pass, rather than collected inside each of the three platform loaders.
+
+- **One implementation.** It only reads `externalCampaignId`, `campaignName` and `date`, which every normalized
+  row has. Building it per loader would mean three copies of the same logic, with rules like
+  "latest name wins after a rename" able to drift apart.
+- **A fourth platform is just a loader.** A new source only has to emit `NormalizedRow`s; campaign building and
+  matching work on it unchanged.
+- **Loaders do one job.** Each loader maps raw platform data to normalized rows and nothing else, so its output
+  can be checked directly against the raw file.
+- **Cost.** One extra loop over ~1,150 rows, which is negligible. At production scale this becomes a single
+  `GROUP BY` over the normalized table, which is the same design.
+
+Revisit only if rows can no longer be held in memory (for example streaming a large backfill). Even then, the
+fix is one shared collector fed from a single import loop, not campaign logic in each loader.
