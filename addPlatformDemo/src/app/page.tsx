@@ -80,7 +80,7 @@ export default function Home() {
                 />
               </svg>
             </span>
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-semibold text-gray-900">Campaign matching needs attention</p>
               <p className="mt-1 text-sm text-gray-600">
                 {[
@@ -91,7 +91,7 @@ export default function Home() {
                   .filter(Boolean)
                   .join(", ")}
                 . These sit in Ambiguous / Unmatched totals (or their override initiative) until mapped in{" "}
-                <code className="rounded-md bg-warning-100 px-1.5 py-0.5 font-mono text-xs text-warning-700">
+                <code className="break-all rounded-md bg-warning-100 px-1.5 py-0.5 font-mono text-xs text-warning-700">
                   src/config/campaignOverrides.ts
                 </code>
                 .
@@ -136,7 +136,7 @@ export default function Home() {
                               {c.candidates.map((id) => initiativeName.get(id)).join(" or ")}?
                             </span>
                           ) : (
-                            <span className="text-gray-400">None</span>
+                            <span className="text-gray-500">None</span>
                           )}
                         </td>
                         <td className="py-4 pr-4">

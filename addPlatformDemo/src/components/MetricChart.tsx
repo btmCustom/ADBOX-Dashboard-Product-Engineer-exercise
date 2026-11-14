@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import {
-  Bar,
-  BarChart,
   CartesianGrid,
   Line,
   LineChart,
@@ -101,6 +99,43 @@ function chartPoints(
 
 const COLOR = "#7F56D9"; // Untitled UI brand-600
 
+const MOBILE_LABEL_MAX = 28;
+
+function displayLabel(label: string, maxChars: number | null) {
+  if (maxChars == null || label.length <= maxChars) return label;
+  return `${label.slice(0, maxChars - 1)}…`;
+}
+
+function RankedBars({ points, metric }: { points: Point[]; metric: MetricDef }) {
+  const ranked = [...points].sort((a, b) => (b.value ?? -Infinity) - (a.value ?? -Infinity));
+  const max = Math.max(0, ...ranked.map((p) => p.value ?? 0));
+
+  return (
+    <ul className="flex flex-col gap-3" role="list">
+      {ranked.map((point) => {
+        const widthPct = point.value == null || max === 0 ? 0 : (point.value / max) * 100;
+        const short = displayLabel(point.label, MOBILE_LABEL_MAX);
+        return (
+          <li key={point.label} className="min-w-0">
+            <div className="mb-1.5 flex items-baseline justify-between gap-3">
+              <span className="min-w-0 text-sm font-medium text-gray-700" title={point.label}>
+                <span className="sm:hidden">{short}</span>
+                <span className="hidden sm:inline">{point.label}</span>
+              </span>
+              <span className="shrink-0 text-sm font-semibold tabular-nums text-gray-900">
+                {point.value == null ? "—" : metric.format(point.value)}
+              </span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-gray-100" aria-hidden>
+              <div className="h-full rounded-full" style={{ width: `${widthPct}%`, backgroundColor: COLOR }} />
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 export function MetricChart({ rows, campaignOf, groups }: Props) {
   const [metricKey, setMetricKey] = useState<MetricKey>("roas");
   const [dimension, setDimension] = useState<Dimension>("initiative");
@@ -158,48 +193,7 @@ export function MetricChart({ rows, campaignOf, groups }: Props) {
           </LineChart>
         </ResponsiveContainer>
       ) : (
-        <ResponsiveContainer width="100%" height={Math.max(160, points.length * 40 + 32)}>
-          <BarChart data={points} layout="vertical" margin={{ top: 0, right: 72, bottom: 0, left: 0 }}>
-            <CartesianGrid horizontal={false} stroke="#E4E7EC" />
-            <XAxis
-              type="number"
-              tickFormatter={metric.axisFormat}
-              tick={{ fontSize: 12, fill: "#667085" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <YAxis
-              type="category"
-              dataKey="label"
-              width={dimension === "campaign" ? 280 : 180}
-              tick={{ fontSize: 12, fill: "#344054" }}
-              axisLine={false}
-              tickLine={false}
-            />
-            <Tooltip
-              formatter={tooltipFormatter}
-              cursor={{ fill: "#F9FAFB" }}
-              contentStyle={{
-                borderRadius: 8,
-                borderColor: "#E4E7EC",
-                boxShadow: "0 1px 3px rgba(16, 24, 40, 0.1)",
-                fontSize: 13,
-              }}
-            />
-            <Bar
-              dataKey="value"
-              fill={COLOR}
-              radius={[0, 6, 6, 0]}
-              isAnimationActive={false}
-              label={{
-                position: "right",
-                fontSize: 12,
-                fill: "#475467",
-                formatter: (v: unknown) => (typeof v === "number" ? metric.format(v) : ""),
-              }}
-            />
-          </BarChart>
-        </ResponsiveContainer>
+        <RankedBars points={points} metric={metric} />
       )}
     </div>
   );

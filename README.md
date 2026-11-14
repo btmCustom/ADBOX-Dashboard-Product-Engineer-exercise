@@ -1,10 +1,31 @@
 # ADBOX Dashboard Product Engineer: Build Exercise
 
-Start with `ADBOX-Dashboard-Product-Engineer-Assessment.pdf`. It is the full brief: what to build, what to send back and how we evaluate. This README covers the files and a submission checklist.
+**Time spent:** about 1 hour 40 minutes (this session, ~2:40–4:20 PM PT), including build, tests, design doc, and polish.
 
-**Time:** plan on about 2 hours to build, plus about 30 minutes for the design doc, recap video and AI transcript. There is no timer or hard cutoff. Tell us roughly how long you spent at the top of your README.
+Start with `ADBOX-Dashboard-Product-Engineer-Assessment.pdf`. It is the full brief: what to build, what to send back and how we evaluate. This README covers how to run the app, the packet files, and a submission checklist.
 
 The data covers August 1 to September 29, 2026 (60 days) for one client, Harbor Point Bank.
+
+## Run the dashboard
+
+Requires Node.js 20+.
+
+```bash
+cd addPlatformDemo
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000). The three platform exports in the repo root are loaded automatically.
+
+Useful extras:
+
+```bash
+npm test          # Vitest unit + UI tests
+npm run build && npm start   # production build
+```
+
+Design doc: [`addPlatformDemo/docs/design-doc.md`](addPlatformDemo/docs/design-doc.md). AI transcript: [`addPlatformDemo/docs/ai-transcript.md`](addPlatformDemo/docs/ai-transcript.md).
 
 ## Files
 

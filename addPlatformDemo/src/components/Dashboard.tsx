@@ -107,7 +107,7 @@ export function Dashboard({ rows, campaigns, groups }: Props) {
       ) : (
         <>
           <section aria-label="Headline metrics">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(12.5rem,1fr))] gap-4">
               {METRICS.map((metric) => (
                 <div
                   key={metric.key}

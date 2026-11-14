@@ -82,12 +82,19 @@ function SortHeader({
   );
 }
 
+function rowTone(selected: boolean, base: string) {
+  if (selected) return "bg-brand-50 outline outline-1 -outline-offset-1 outline-brand-200";
+  return base;
+}
+
 export function TotalsTable({ rows, campaignOf, groups }: Props) {
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [selected, setSelected] = useState<string | null>(null);
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: "spend", dir: "desc" });
 
   const isOpen = (key: string) => open[key] ?? false;
   const toggle = (key: string) => setOpen((prev) => ({ ...prev, [key]: !isOpen(key) }));
+  const selectRow = (id: string) => setSelected(id);
 
   const onSort = (key: SortKey) => {
     setSort((prev) =>
@@ -159,16 +166,27 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
                 <span className="font-semibold text-gray-900">{group.label}</span>
               );
 
+            const groupId = group.key;
+            const groupSelected = selected === groupId;
+
             return (
               <tbody key={group.key} className="border-b border-gray-200">
-                <tr className="bg-gray-25">
+                <tr
+                  className={`${rowTone(groupSelected, "bg-gray-25 hover:bg-gray-50")} cursor-pointer`}
+                  onClick={() => selectRow(groupId)}
+                  aria-selected={groupSelected}
+                >
                   <td className="whitespace-nowrap py-3 pr-3">
                     {channels.length > 0 ? (
                       <button
                         type="button"
-                        onClick={() => toggle(group.key)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggle(group.key);
+                          selectRow(groupId);
+                        }}
                         aria-expanded={expanded}
-                        className="inline-flex items-center gap-2 text-left hover:text-gray-700 focus:ring-4 focus:ring-brand-100 focus:outline-none"
+                        className="inline-flex items-center gap-2 text-left hover:text-gray-700 focus:outline-none"
                       >
                         <span
                           aria-hidden
@@ -190,17 +208,30 @@ export function TotalsTable({ rows, campaignOf, groups }: Props) {
                   <MetricCells totals={total} />
                 </tr>
                 {expanded &&
-                  channels.map(({ channel, total: channelTotal }: { channel: Channel; total: Metrics }) => (
-                    <tr key={channel} className="text-gray-600 hover:bg-gray-50">
-                      <td className="whitespace-nowrap py-3 pl-10 pr-3">{CHANNEL_LABEL[channel]}</td>
-                      <MetricCells totals={channelTotal} />
-                    </tr>
-                  ))}
+                  channels.map(({ channel, total: channelTotal }: { channel: Channel; total: Metrics }) => {
+                    const channelId = `${group.key}|${channel}`;
+                    const channelSelected = selected === channelId;
+                    return (
+                      <tr
+                        key={channel}
+                        className={`${rowTone(channelSelected, "text-gray-600 hover:bg-gray-50")} cursor-pointer`}
+                        onClick={() => selectRow(channelId)}
+                        aria-selected={channelSelected}
+                      >
+                        <td className="whitespace-nowrap py-3 pl-10 pr-3">{CHANNEL_LABEL[channel]}</td>
+                        <MetricCells totals={channelTotal} />
+                      </tr>
+                    );
+                  })}
               </tbody>
             );
           })}
           <tfoot>
-            <tr className="border-t-2 border-gray-300 font-semibold text-gray-900">
+            <tr
+              className={`border-t-2 border-gray-300 font-semibold text-gray-900 cursor-pointer ${rowTone(selected === "__grand__", "hover:bg-gray-50")}`}
+              onClick={() => selectRow("__grand__")}
+              aria-selected={selected === "__grand__"}
+            >
               <td className="py-3.5 pr-3">Grand total</td>
               <MetricCells totals={grandTotal} />
             </tr>

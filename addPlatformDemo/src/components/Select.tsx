@@ -49,6 +49,7 @@ export function Select<T extends string>({
   const listRef = useRef<HTMLUListElement>(null);
   const listboxId = useId();
   const labelId = useId();
+  const valueId = useId();
   const selected = options.find((o) => o.value === value) ?? options[0];
 
   const focusOption = (index: number) => {
@@ -107,7 +108,7 @@ export function Select<T extends string>({
         type="button"
         aria-haspopup="listbox"
         aria-expanded={open}
-        aria-labelledby={labelId}
+        aria-labelledby={`${labelId} ${valueId}`}
         aria-controls={listboxId}
         onClick={() => (open ? setOpen(false) : openMenu())}
         className={`flex h-11 w-full items-center justify-between gap-2 rounded-lg border bg-white py-2.5 pr-3.5 pl-3.5 text-left text-base shadow-xs transition-colors focus:outline-none ${
@@ -116,7 +117,9 @@ export function Select<T extends string>({
             : "border-gray-300 hover:border-gray-400 focus:border-brand-300 focus:ring-4 focus:ring-brand-100"
         }`}
       >
-        <span className="truncate font-medium text-gray-900">{selected?.label}</span>
+        <span id={valueId} className="truncate font-medium text-gray-900">
+          {selected?.label}
+        </span>
         <ChevronDown className={`h-5 w-5 shrink-0 text-gray-500 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
 
